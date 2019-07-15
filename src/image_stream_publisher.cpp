@@ -26,7 +26,6 @@ int main(int argc, char **argv) {
     }
     closedir(dir);
   } else {
-    /* could not open directory */
     perror("");
     return EXIT_FAILURE;
   }
@@ -35,14 +34,15 @@ int main(int argc, char **argv) {
   for (auto img : images) {
     if (ros::ok()) {
       image = cv::imread(basedir + img, CV_LOAD_IMAGE_UNCHANGED);
-      if (image.empty()) {
-        // can't go on !
+      if (!image.empty()) {
+        sensor_msgs::ImagePtr msg =
+            cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
+
+        pub.publish(msg);
+      } else {
+
         std::cout << "image '" << ent->d_name << "' empty" << std::endl;
       }
-      sensor_msgs::ImagePtr msg =
-          cv_bridge::CvImage(std_msgs::Header(), "bgr8", image).toImageMsg();
-
-      pub.publish(msg);
       ros::spinOnce();
       loop_rate.sleep();
     }
